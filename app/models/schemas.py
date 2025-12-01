@@ -170,3 +170,73 @@ class EligibilityResult(BaseModel):
         description="지금 해야 할 행동 체크리스트",
     )
 
+
+# ============================================================
+# 대화형 질의응답 (Chat) 스키마
+# ============================================================
+
+class ChatMessage(BaseModel):
+    """채팅 메시지"""
+    
+    role: Literal["user", "assistant", "system"] = Field(
+        ..., description="메시지 역할"
+    )
+    content: str = Field(..., description="메시지 내용")
+    timestamp: Optional[str] = Field(None, description="타임스탬프 (ISO 8601)")
+
+
+class ChatRequest(BaseModel):
+    """채팅 요청"""
+    
+    doc_id: str = Field(..., description="분석 결과 문서 ID")
+    doc_context: DocAnalysisResult = Field(..., description="문서 분석 결과 전체")
+    messages: list[ChatMessage] = Field(..., description="대화 히스토리")
+    
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "doc_id": "analysis-2025-0001",
+                    "doc_context": {
+                        "id": "mock-1",
+                        "summary": "2025년 서울지역 공공분양 주택 입주자 모집공고",
+                        "actions": [],
+                        "extracted": {
+                            "docType": "housing_application_notice",
+                            "title": "2025년 서울지역 공공분양",
+                        },
+                        "evidence": [],
+                        "uncertainty": [],
+                    },
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": "이거 꼭 내야 해?"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+
+
+class SuggestedQuestion(BaseModel):
+    """추천 질문"""
+    
+    text: str = Field(..., description="추천 질문 텍스트")
+    category: Literal["deadline", "amount", "method", "general"] = Field(
+        ..., description="질문 카테고리"
+    )
+
+
+class ChatResponse(BaseModel):
+    """채팅 응답"""
+    
+    message: str = Field(..., description="AI 답변 메시지")
+    suggestions: list[SuggestedQuestion] = Field(
+        default_factory=list, description="다음 추천 질문 목록"
+    )
+    confidence: float = Field(
+        default=1.0, ge=0.0, le=1.0, description="답변 신뢰도"
+    )
+

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import analyze
+from app.api.routes import analyze, chat
 
 app = FastAPI(
     title="DocGuide AI API",
@@ -20,6 +20,7 @@ app.add_middleware(
 
 # 라우터 등록
 app.include_router(analyze.router, prefix="/api", tags=["analyze"])
+app.include_router(chat.router, prefix="/api", tags=["chat"])
 
 
 @app.get("/")
