@@ -240,3 +240,75 @@ class ChatResponse(BaseModel):
         default=1.0, ge=0.0, le=1.0, description="답변 신뢰도"
     )
 
+
+# ============================================================
+# 취업지원금 자격 확인 스키마
+# ============================================================
+
+class JobSupportUserProfile(BaseModel):
+    """취업지원금 신청자 조건 입력 정보"""
+    
+    # 기본 정보
+    age: int = Field(..., description="신청자 나이", ge=15, le=69)
+    
+    # 가구 정보
+    household_size: int = Field(..., description="가구원 수", ge=1)
+    
+    # 소득 정보
+    household_monthly_income: Optional[int] = Field(
+        None, description="가구 월 소득 (만원 단위)"
+    )
+    
+    # 재산 정보  
+    household_total_assets: Optional[int] = Field(
+        None, description="가구 총 재산 (만원 단위)"
+    )
+    
+    # 취업 경험
+    work_experience_days: Optional[int] = Field(
+        None, description="최근 2년 내 근무 일수"
+    )
+    work_experience_hours: Optional[int] = Field(
+        None, description="최근 2년 내 근무 시간"
+    )
+    
+    # 특별 조건
+    is_receiving_unemployment: bool = Field(
+        default=False, description="실업급여 수급 중 여부"
+    )
+    is_youth: Optional[bool] = Field(
+        None, description="청년 (18~34세) 여부"
+    )
+    is_senior: Optional[bool] = Field(
+        None, description="중장년 (50~69세) 여부"
+    )
+    special_category: Optional[Literal[
+        "none",
+        "career_break_woman",
+        "special_worker",
+        "homeless",
+    ]] = Field(
+        default="none",
+        description="특수 계층 (경력단절여성, 특수형태근로자, 노숙인 등)"
+    )
+
+
+class JobSupportEligibilityResult(BaseModel):
+    """취업지원금 자격 평가 결과"""
+    
+    eligible_type: Literal["type_1", "type_2", "ineligible"] = Field(
+        ..., description="I유형(요건심사)/II유형(선발)/부적격"
+    )
+    status_message: str = Field(
+        ..., description="자격 판정 결과 설명"
+    )
+    expected_benefit: Optional[str] = Field(
+        None, description="예상 지원 내용 (월 50만원 × 6개월 등)"
+    )
+    checklist: list[str] = Field(
+        default_factory=list, description="준비 사항 체크리스트"
+    )
+    warnings: list[str] = Field(
+        default_factory=list, description="주의사항"
+    )
+

@@ -6,10 +6,13 @@ import pdfplumber
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
 from app.core.config import settings
+from app.core.prompts import JOB_SUPPORT_ELIGIBILITY_PROMPT
 from app.models.schemas import (
     DocAnalysisResult,
     EligibilityResult,
     EligibilityUserProfile,
+    JobSupportUserProfile,
+    JobSupportEligibilityResult,
     ErrorResponse,
 )
 from openai import OpenAI
@@ -286,4 +289,69 @@ async def analyze_eligibility(
         ) from e
 
     return EligibilityResult(**data)
+
+
+@router.post(
+    "/analyze/job-support-eligibility",
+    response_model=JobSupportEligibilityResult,
+    responses={400: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
+    summary="취업지원금 신청 자격 평가",
+    description="""
+    취업지원금 공고 분석 결과와 사용자 정보를 기반으로 신청 자격을 평가합니다.
+    
+    - I유형(요건심사형) / II유형(선발형) / 부적격 중 판정
+    - 예상 지원 내용 안내
+    - 준비 서류 체크리스트 제공
+    """,
+)
+async def check_job_support_eligibility(
+    doc: DocAnalysisResult,
+    profile: JobSupportUserProfile,
+):
+    """
+    취업지원금 신청 자격 평가
+    """
+    if not settings.OPEN_AI_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="OPEN_AI_KEY가 서버에 설정되어 있지 않습니다.",
+        )
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            temperature=0.2,
+            max_tokens=1000,
+            messages=[
+                {
+                    "role": "system",
+                    "content": JOB_SUPPORT_ELIGIBILITY_PROMPT,
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        "다음 지원금 공고 분석 결과(DocAnalysisResult)와 "
+                        "사용자 조건(JobSupportUserProfile)을 참고하여, "
+                        "위에서 설명한 JobSupportEligibilityResult JSON만 출력하세요.\n\n"
+                        f"[공고 분석 결과]\n"
+                        f"{json.dumps(doc.model_dump(), ensure_ascii=False)}\n\n"
+                        f"[사용자 조건]\n"
+                        f"{json.dumps(profile.model_dump(), ensure_ascii=False)}"
+                    ),
+                },
+            ],
+        )
+
+        content = response.choices[0].message.content
+        if not content:
+            raise ValueError("LLM 응답이 비어 있습니다.")
+
+        data = json.loads(content)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"취업지원금 자격 평가 중 오류가 발생했습니다: {e}",
+        ) from e
+
+    return JobSupportEligibilityResult(**data)
 
