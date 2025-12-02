@@ -7,6 +7,7 @@ from openai import OpenAI
 from app.core.config import settings
 from app.core.prompts import get_chat_prompt, get_suggested_questions
 from app.models.schemas import (
+    AnswerSource,
     ChatRequest,
     ChatResponse,
     SuggestedQuestion,
@@ -85,11 +86,47 @@ async def chat_with_document(request: ChatRequest):
             SuggestedQuestion(text=q["text"], category=q["category"])
             for q in suggested_questions_list
         ]
-        
+
+        # 간단한 근거 선택 로직:
+        # - 분석 결과의 evidence 항목 중에서 최근 사용자 질문과 가장 관련 있어 보이는 것 상위 3개 선택
+        sources: list[AnswerSource] = []
+        evidences = request.doc_context.evidence or []
+
+        if evidences:
+            question = (
+                request.messages[-1].content if request.messages else ""
+            )
+            question_lower = question.lower()
+            tokens = [t for t in question_lower.split() if len(t) >= 2]
+
+            def score(evidence) -> int:
+                text_lower = evidence.text.lower()
+                if not tokens:
+                    return 0
+                return sum(1 for token in tokens if token in text_lower)
+
+            sorted_evidences = sorted(
+                evidences,
+                key=score,
+                reverse=True,
+            )
+
+            for ev in sorted_evidences[:3]:
+                # analyze 단계에서 설정된 page 정보를 그대로 사용
+                # (없으면 None으로 두고, 프론트에서 '페이지 정보 없음' 상태로 처리)
+                sources.append(
+                    AnswerSource(
+                        text=ev.text,
+                        page=ev.page,
+                        field=ev.field,
+                    )
+                )
+
         return ChatResponse(
             message=answer,
             suggestions=suggestions,
             confidence=0.9,  # 추후 실제 신뢰도 계산 로직 추가 가능
+            sources=sources,
         )
         
     except Exception as e:

@@ -239,6 +239,25 @@ class ChatResponse(BaseModel):
     confidence: float = Field(
         default=1.0, ge=0.0, le=1.0, description="답변 신뢰도"
     )
+    # 선택: 답변에 사용된 문서 내 근거 정보
+    sources: list["AnswerSource"] = Field(
+        default_factory=list, description="답변에 사용된 근거 문장/구간 목록"
+    )
+
+
+class AnswerSource(BaseModel):
+    """채팅 응답에 포함되는 근거 문장/구간"""
+
+    text: str = Field(..., description="근거가 된 문장 또는 문단")
+    page: Optional[int] = Field(
+        None, description="해당 내용이 포함된 페이지 번호 (1부터 시작, 없으면 null)"
+    )
+    field: Optional[str] = Field(
+        None, description="연관된 필드명 (예: deadline, amount 등, 선택)"
+    )
+
+
+ChatResponse.model_rebuild()
 
 
 # ============================================================
