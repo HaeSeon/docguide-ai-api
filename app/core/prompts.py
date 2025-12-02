@@ -37,7 +37,16 @@ A: "홈택스(www.hometax.go.kr)에서 납부하실 수 있습니다. 로그인 
 
 # 문서 유형별 추천 질문
 SUGGESTED_QUESTIONS: Dict[str, List[Dict[str, str]]] = {
+    # 주택청약 공고 (옛 이름: housing_application_notice)
     "housing_application_notice": [
+        {"text": "제가 신청할 수 있나요?", "category": "general"},
+        {"text": "언제까지 신청해야 하나요?", "category": "deadline"},
+        {"text": "어디서 신청하는 건가요?", "category": "method"},
+        {"text": "필요한 서류는 무엇인가요?", "category": "method"},
+        {"text": "경쟁률은 어느 정도인가요?", "category": "general"},
+    ],
+    # 프롬프트에서 사용하는 새 docType 이름 (동일한 질문 재사용)
+    "housing_application": [
         {"text": "제가 신청할 수 있나요?", "category": "general"},
         {"text": "언제까지 신청해야 하나요?", "category": "deadline"},
         {"text": "어디서 신청하는 건가요?", "category": "method"},

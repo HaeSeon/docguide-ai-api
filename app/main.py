@@ -12,7 +12,10 @@ app = FastAPI(
 # CORS 설정 - 개발 환경: Next.js 프론트엔드 허용
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Next.js 개발 서버
+    allow_origins=[
+        "http://localhost:3000",  # Next.js 로컬 개발 서버
+        "https://docguide-ai-fe.vercel.app",  # 배포된 프론트엔드
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],

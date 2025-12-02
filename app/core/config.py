@@ -10,10 +10,11 @@ class Settings(BaseSettings):
     # OpenAI 설정
     OPEN_AI_KEY: str | None = None
     
-    # CORS 설정
+    # CORS 설정 (필요 시 .env 에서 덮어쓰기)
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://localhost:3001",
+        "https://docguide-ai-fe.vercel.app",
     ]
     
     # 파일 업로드 설정
