@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     
     # 파일 업로드 설정
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
-    ALLOWED_EXTENSIONS: list[str] = [".pdf", ".docx", ".txt", ".hwp"]
+    ALLOWED_EXTENSIONS: list[str] = [".pdf", ".txt"]
     
     class Config:
         env_file = ".env"
